@@ -7,6 +7,7 @@ from urllib.parse import urljoin, unquote, urlparse
 from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from streamlit.components.v1 import html
 
 # Constants
 DOWNLOAD_DIR = "downloads"
@@ -147,6 +148,76 @@ def main():
                     st.markdown(f"**Date:** `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`")
                 elif st.session_state.cancel_download:
                     st.info("Download was cancelled by user.")
+                    
+        # Ads in footer
+    footer_ads = """
+    <style>
+      .ad-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        border-top: 1px solid #ccc;
+        padding: 10px 0;
+        text-align: center;
+        z-index: 9999;
+      }
+      .ad-slider {
+        display: inline-block;
+        width: 300px;
+        height: 250px;
+        overflow: hidden;
+        position: relative;
+      }
+      .ad-slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transition: opacity 1s ease-in-out;
+        opacity: 0;
+      }
+      .ad-slide.active {
+        opacity: 1;
+      }
+    </style>
+
+    <div class="ad-footer">
+      <div class="ad-slider">
+        <!-- Ad 1 -->
+        <div class="ad-slide active">
+          <script async="async" data-cfasync="false" src="//pl26589582.profitableratecpm.com/b4cc063169b5ae7158931d87d09b2e9c/invoke.js"></script>
+          <div id="container-b4cc063169b5ae7158931d87d09b2e9c" style="width: 300px; height: 250px;"></div>
+        </div>
+        
+        <!-- Ad 2 -->
+        <div class="ad-slide">
+          <script type="text/javascript">
+            atOptions = {
+              'key' : '8c7155ca9199bcc38833ea34a30713b0',
+              'format' : 'iframe',
+              'height' : 250,
+              'width' : 300,
+              'params' : {}
+            };
+          </script>
+          <script type="text/javascript" src="//www.highperformanceformat.com/8c7155ca9199bcc38833ea34a30713b0/invoke.js"></script>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let slides = document.querySelectorAll('.ad-slide');
+      let currentIndex = 0;
+      setInterval(() => {
+        slides[currentIndex].classList.remove('active');
+        currentIndex = (currentIndex + 1) % slides.length;
+        slides[currentIndex].classList.add('active');
+      }, 5000);
+    </script>
+    """
+
+    html(footer_ads, height=300)
 
 if __name__ == "__main__":
     main()
