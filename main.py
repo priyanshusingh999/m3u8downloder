@@ -2,6 +2,7 @@ import streamlit as st
 import m3u8
 import requests
 import os
+import base64
 from urllib.parse import urljoin, unquote, urlparse
 from datetime import datetime
 from pathlib import Path
@@ -132,12 +133,12 @@ def main():
                     with open(ts_result, "rb") as f:
                         video_bytes = f.read()
 
-                    st.download_button(
-                        label="⬇️ Manual Download",
-                        data=video_bytes,
-                        file_name=ts_name,
-                        mime="video/mp4"
-                    )
+                    # Convert video bytes to base64
+                    video_base64 = base64.b64encode(video_bytes).decode('utf-8')
+
+                    # HTML/JavaScript for automatic download trigger
+                    download_link = f'<a href="data:video/mp4;base64,{video_base64}" download="{ts_name}">Click here to download</a>'
+                    st.markdown(download_link, unsafe_allow_html=True)
 
                     file_size = os.path.getsize(ts_result) / (1024 * 1024)
                     st.subheader("📁 File Info")
