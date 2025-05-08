@@ -50,7 +50,7 @@ def download_segment(segment_url, headers, retries=3):
             else:
                 return None
 
-# Multi-threaded download with cancel support
+# Multi-threaded download
 def download_m3u8_multithreaded(m3u8_url, ts_path, progress_callback=None):
     try:
         headers = {"User-Agent": "Mozilla/5.0", "Referer": m3u8_url}
@@ -68,8 +68,6 @@ def download_m3u8_multithreaded(m3u8_url, ts_path, progress_callback=None):
 
             completed = 0
             for future in as_completed(futures):
-                if st.session_state.get("cancel_download"):
-                    return None  # Cancel requested
                 i = futures[future]
                 data = future.result()
                 if data:
@@ -93,27 +91,15 @@ def main():
     st.set_page_config(page_title="M3U8 Video Downloader", layout="centered")
     st.title("📺 M3U8 Video Downloader")
 
-    if "cancel_download" not in st.session_state:
-        st.session_state.cancel_download = False
-
-    url = st.text_input("Paste M3U8 URL here:")
+    url = st.text_input("🔗 Paste M3U8 URL here:")
 
     if url:
         resolutions = parse_m3u8(url)
         if resolutions:
-            resolution = st.selectbox("Choose resolution", list(resolutions.keys()))
+            resolution = st.selectbox("Choose Resolution", list(resolutions.keys()))
             selected_url = resolutions[resolution]
 
-            col1, col2 = st.columns([1, 1])
-            download_clicked = col1.button("⬇️ Download Video")
-            cancel_clicked = col2.button("❌ Cancel Download")
-
-            if cancel_clicked:
-                st.session_state.cancel_download = True
-                st.warning("Download cancelled.")
-
-            if download_clicked:
-                st.session_state.cancel_download = False
+            if st.button("⬇️ Download Video"):
                 title = extract_title_from_url(url)
                 ts_name = f"{title}.mp4"
                 ts_path = os.path.join(DOWNLOAD_DIR, ts_name)
@@ -124,21 +110,24 @@ def main():
                 def update_progress(current, total):
                     percent = int((current / total) * 100)
                     progress_bar.progress(min(percent, 100))
-                    status.text(f"Downloading... {current}/{total}")
+                    status.text(f"Downloading... {current}/{total} segments")
 
-                st.info("Starting download...")
+                st.info("📥 Download in progress...")
                 ts_result = download_m3u8_multithreaded(selected_url, ts_path, update_progress)
 
                 if ts_result:
                     st.success("✅ Download complete.")
+
                     with open(ts_result, "rb") as f:
                         video_bytes = f.read()
 
-                    # Convert video bytes to base64
-                    video_base64 = base64.b64encode(video_bytes).decode('utf-8')
+                    video_base64 = base64.b64encode(video_bytes).decode("utf-8")
 
-                    # HTML/JavaScript for automatic download trigger
-                    download_link = f'<a href="data:video/mp4;base64,{video_base64}" download="{ts_name}">Click here to download</a>'
+                    download_link = f"""
+                    <a href="data:video/mp4;base64,{video_base64}" download="{ts_name}" style="font-size:18px; color:white; background-color:#4CAF50; padding:10px 20px; text-decoration:none; border-radius:5px;">
+                        🚀 Click here to download your video
+                    </a>
+                    """
                     st.markdown(download_link, unsafe_allow_html=True)
 
                     file_size = os.path.getsize(ts_result) / (1024 * 1024)
@@ -146,79 +135,19 @@ def main():
                     st.markdown(f"**Filename:** `{ts_name}`")
                     st.markdown(f"**Size:** `{file_size:.2f} MB`")
                     st.markdown(f"**Date:** `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`")
-                elif st.session_state.cancel_download:
-                    st.info("Download was cancelled by user.")
-                    
-        # Ads in footer
-    footer_ads = """
-    <style>
-      .ad-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #fff;
-        border-top: 1px solid #ccc;
-        padding: 10px 0;
-        text-align: center;
-        z-index: 9999;
-      }
-      .ad-slider {
-        display: inline-block;
-        width: 300px;
-        height: 250px;
-        overflow: hidden;
-        position: relative;
-      }
-      .ad-slide {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        transition: opacity 1s ease-in-out;
-        opacity: 0;
-      }
-      .ad-slide.active {
-        opacity: 1;
-      }
-    </style>
 
-    <div class="ad-footer">
-      <div class="ad-slider">
-        <!-- Ad 1 -->
-        <div class="ad-slide active">
-          <script async="async" data-cfasync="false" src="//pl26589582.profitableratecpm.com/b4cc063169b5ae7158931d87d09b2e9c/invoke.js"></script>
-          <div id="container-b4cc063169b5ae7158931d87d09b2e9c" style="width: 300px; height: 250px;"></div>
-        </div>
-        
-        <!-- Ad 2 -->
-        <div class="ad-slide">
-          <script type="text/javascript">
-            atOptions = {
-              'key' : '8c7155ca9199bcc38833ea34a30713b0',
-              'format' : 'iframe',
-              'height' : 250,
-              'width' : 300,
-              'params' : {}
-            };
-          </script>
-          <script type="text/javascript" src="//www.highperformanceformat.com/8c7155ca9199bcc38833ea34a30713b0/invoke.js"></script>
-        </div>
-      </div>
+    # Ads block (iframe/image-based)
+    ads_html = """
+    <div style='text-align:center; margin-top:30px;'>
+        <a href='https://example.com' target='_blank'>
+            <img src='https://via.placeholder.com/300x250?text=Your+Ad+Here' width='300' height='250'>
+        </a>
+        <p style='font-size:12px; color:gray;'>Advertisement</p>
     </div>
-
-    <script>
-      let slides = document.querySelectorAll('.ad-slide');
-      let currentIndex = 0;
-      setInterval(() => {
-        slides[currentIndex].classList.remove('active');
-        currentIndex = (currentIndex + 1) % slides.length;
-        slides[currentIndex].classList.add('active');
-      }, 5000);
-    </script>
     """
-
-    html(footer_ads, height=300)
+    html(ads_html, height=300)
 
 if __name__ == "__main__":
     main()
+
 
